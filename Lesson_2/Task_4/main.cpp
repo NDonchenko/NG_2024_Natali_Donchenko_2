@@ -4,22 +4,13 @@ using namespace std;
 
 int main()
 {
-     int box[10][10];
-
-     for (int height = 0; height < 10; height++) {
-         for (int width = 0; width < 10; width++)
-             box[height][width] = 0;
-     }
-
-     box[1][4] = 1;
-
-     for (int height = 0; height < 10; height++) {
-         for (int width = 0; width < 10; width++)
-             cout << box[height][width];
-         cout << endl;
-     }
-     for (char element = 'a'; element < 'z' + 1; element++)
-     {
-        cout << element << " - " << (int)element << endl;
+    char string[256];
+    cout << "Enter string: ";
+    cin.getline(string, 256);
+    int element = 0;
+    while (string[element] != 0) {
+        element++;
     }
+    cout<<"Number of characters: "<<element;
+    return 0;
 }
