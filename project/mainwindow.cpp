@@ -34,6 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect (ui->b_add_exp_inc,&QPushButton::clicked, this, &MainWindow::b_add_exp_inc);
     connect (ui->tw_records, &QTableWidget::cellChanged, this, &MainWindow::onWorkerTableWidgetItemChanged);
     connect (ui->b_showReport, &QPushButton::clicked, this, &MainWindow::b_showReport);
+    connect (ui->b_exporToPDF, &QPushButton::clicked, this, &MainWindow::b_exporToPDF);
 }
 
 MainWindow::~MainWindow()
@@ -61,6 +62,15 @@ void MainWindow::b_exitCC()
 void MainWindow::b_exit_8()
 {
     ui->stackedWidget->setCurrentIndex(0);
+}
+
+void MainWindow::b_exporToPDF()
+{
+
+    QString filePath = QFileDialog::getSaveFileName(this, "Save PDF", "", "PDF Files (*.pdf)");
+    if (!filePath.isEmpty()) {
+        exportDataToPDF(ui->tw_expense, ui->tw_income, filePath);
+    }
 }
 void MainWindow::b_createUser()
 {
@@ -165,7 +175,7 @@ void MainWindow::b_add_exp_inc()
         }
         QString TypeRecord = ui->cbox_records->currentText();
         if(TypeRecord == "expense"){
-            //nm_dbWorker->createExpense();
+            m_dbWorker->createExpense();
             m_dbWorker->FillIncomeExpenses(rowData,TypeRecord);
         } else if(TypeRecord == "income"){
             m_dbWorker->createIncome();
@@ -233,11 +243,11 @@ void MainWindow::showReportExp_Inc(QTableWidget*TableReport)
     QStringList headers = {"Company","Category","Nomenclature", "Amount", "Date"};
     TableReport->setHorizontalHeaderLabels(headers);
     double totalAmount = 0.0;
-    for (int i = 0; i < DataList.size(); i++)
+    for (int index = 0; index < DataList.size(); index++)
     {
         int row = TableReport->rowCount();
         TableReport->insertRow(row);
-        QStringList columns = DataList[i].split(",");
+        QStringList columns = DataList[index].split(",");
         for (int col = 0; col < columns.size(); col++)
         {
             QTableWidgetItem *item = new QTableWidgetItem(columns[col].trimmed());
@@ -284,6 +294,113 @@ void MainWindow::calculateProfit()
     ui->label_24->setText(ui->label_24->text()+(QString::number(netProfit, 'f', 2)));
 
     ui->label_23->setText(ui->label_23->text()+ m_user.name);
+}
+
+void MainWindow::exportDataToPDF(QTableWidget* TableExpense, QTableWidget* TableIncome, QString filePath)
+{
+    QString Company = ui->comb_company->currentText();
+    QString startDate = ui->le_date->text();
+    QString endDate = ui->le_date_2->text();
+    //QString tableName = TableReport->objectName();
+    QString expenseTableName = TableExpense->objectName();
+    QString incomeTableName = TableIncome->objectName();
+    QStringList expenseData = m_dbWorker->getReportsFromDatabase(Company, startDate, endDate, expenseTableName);
+    QStringList incomeData = m_dbWorker->getReportsFromDatabase(Company, startDate, endDate, incomeTableName);
+
+    if (expenseData.isEmpty() && incomeData.isEmpty()) {
+        qDebug() << "No data to export.";
+        return;
+    }
+
+    QPrinter printer(QPrinter::HighResolution);
+    printer.setOutputFormat(QPrinter::PdfFormat);
+    printer.setOutputFileName(filePath);
+    printer.setPageSize(QPageSize(QPageSize::A4));
+
+    QPainter painter;
+    if (!painter.begin(&printer)) {
+        qDebug() << "Failed to begin painting on printer";
+        return;
+    }
+
+    int yOffset = 1500;
+
+    if (!expenseData.isEmpty()) {
+        drawTableOnPDF(expenseData, "Expenses Report", painter, printer, yOffset);
+       // yOffset += 4000;
+    }
+
+    if (!incomeData.isEmpty()) {
+        yOffset = 1500;
+        drawTableOnPDF(incomeData, "Income Report", painter, printer, yOffset);
+    }
+
+    painter.end();
+    qDebug() << "PDF exported to:" << filePath;
+}
+
+void MainWindow::drawTableOnPDF( QStringList DataList, QString title, QPainter& painter, QPrinter& printer, int &yOffset)
+{
+
+
+
+    QFont font = painter.font();
+    font.setPointSize(10);
+    font.setFamily("Arial");
+    painter.setFont(font);
+
+    int xOffset = 500;
+    //int yOffset = 150;
+    int rowHeight = 200;
+    int colWidth = 2000;
+    painter.drawText(100, 100, "Company Report");
+    painter.drawLine(xOffset, yOffset + rowHeight / 2 - 50, xOffset + 5 * colWidth, yOffset + rowHeight / 2 - 50);
+    QStringList headers = {"Company", "Category", "Nomenclature", "Amount", "Date"};
+    painter.drawText(xOffset, yOffset - rowHeight, title);
+    painter.drawLine(xOffset, yOffset - rowHeight + 10, 10000, yOffset - rowHeight + 10);
+    int lineYOffset = yOffset - 199;
+    int lineLength = 1100;
+    for (int col = 0; col < headers.size(); ++col) {
+        int xPos = xOffset + col * colWidth;
+        painter.drawLine(xPos, lineYOffset, xPos, lineYOffset + lineLength);
+    }
+
+    for (int col = 0; col < headers.size(); col++) {
+        painter.drawText(xOffset + col * colWidth, yOffset, headers[col]);
+    }
+
+
+    yOffset += rowHeight;
+
+
+    double totalAmount = 0.0;
+
+
+    for (int index = 0; index < DataList.size(); index++) {
+        QStringList columns = DataList[index].split(",");
+        painter.drawLine(xOffset, yOffset + rowHeight/2 - 50, xOffset + colWidth * columns.size(), yOffset + rowHeight/2 - 50);
+        for (int col = 0; col < columns.size(); col++) {
+            painter.drawText(xOffset + col * colWidth, yOffset, columns[col].trimmed());
+            if (col == 3) {
+                bool ok;
+                double amount = columns[col].toDouble(&ok);
+                if (ok) {
+                    totalAmount += amount;
+                }
+            }
+        }
+        yOffset += rowHeight;
+    }
+
+    painter.drawText(xOffset, yOffset, "Total Amount: ");
+    painter.drawText(xOffset + 6000, yOffset, QString::number(totalAmount, 'f', 2));
+    int totalLineYOffset = yOffset + rowHeight-70;
+
+    painter.drawLine(xOffset, totalLineYOffset, xOffset + colWidth * headers.size(), totalLineYOffset);
+    if (yOffset > printer.pageLayout().fullRect(QPageLayout::Point).height() - rowHeight) {
+        printer.newPage();
+        yOffset = 150;
+    }
 }
 
 

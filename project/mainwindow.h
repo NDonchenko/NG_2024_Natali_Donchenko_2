@@ -8,6 +8,9 @@
 #include <QListWidget>
 #include <QWidget>
 #include <QLabel>
+#include <QPrinter>
+#include <QPainter>
+#include <QFileDialog>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -39,19 +42,21 @@ private slots:
     void b_add_exp_inc();
     void cbox_company(const QString &selectedCompany);
     void b_exit_8();
-
+    void b_exporToPDF();
     void displayCompanyInfo(const QString &companyList);
     void displayListCompanyNames();
     void b_showReport();
     void showReportExp_Inc(QTableWidget*TableReport);
     void calculateProfit();
+    // export data to PDF
+    void exportDataToPDF(QTableWidget*TableExpense, QTableWidget *TableIncome, QString filePath);
+    void drawTableOnPDF(QStringList DataList, QString title, QPainter &painter, QPrinter &printer, int &yOffset);
     // Worker Table Widget
     //
     void initWorkerForm();
     void onWorkerTableWidgetItemChanged();
     void checkWorkerTableWidgetNeedNewRow();
-    void checkWorkerTableWidgetRowCleanup();
-
+    void checkWorkerTableWidgetRowCleanup(); 
     void newStatusMessage(QString text);
 private:
     Ui::MainWindow *ui;
