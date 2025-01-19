@@ -32,6 +32,7 @@ private slots:
     void b_exit();
     void b_exitTU();
     void b_exitCC();
+    void b_exit_company();
     void b_createUser();
     void b_create_company();
     void b_create_company2();
@@ -58,6 +59,8 @@ private slots:
     void checkWorkerTableWidgetNeedNewRow();
     void checkWorkerTableWidgetRowCleanup(); 
     void newStatusMessage(QString text);
+    void b_exit_report();
+
 private:
     Ui::MainWindow *ui;
     DbWorker *m_dbWorker;

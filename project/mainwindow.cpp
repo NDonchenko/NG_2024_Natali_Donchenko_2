@@ -20,6 +20,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect (ui->b_exitCC, &QPushButton::clicked, this, &MainWindow::b_exitCC);
     connect (ui->b_exit_8, &QPushButton::clicked, this, &MainWindow::b_exit_8);
     connect (ui->b_exitTU, &QPushButton::clicked, this, &MainWindow::b_exitTU);
+    connect (ui->b_exit_company, &QPushButton::clicked, this, &MainWindow::b_exit_company);
+    connect (ui->b_exit_report, &QPushButton::clicked, this, &MainWindow::b_exit_report);
     connect (ui->b_create, &QPushButton::clicked, this, &MainWindow::b_createUser);
     connect (ui->b_UserList, &QPushButton::clicked, this, &MainWindow::b_userList);
     connect (ui->b_delete_user, &QPushButton::clicked, this, &MainWindow::b_deleteUser);
@@ -58,6 +60,11 @@ void MainWindow::b_exitTU()
 void MainWindow::b_exitCC()
 {
     ui->stackedWidget->setCurrentIndex(1);
+}
+
+void MainWindow::b_exit_company()
+{
+    ui->stackedWidget->setCurrentIndex(0);
 }
 void MainWindow::b_exit_8()
 {
@@ -358,11 +365,12 @@ void MainWindow::drawTableOnPDF( QStringList DataList, QString title, QPainter& 
     QStringList headers = {"Company", "Category", "Nomenclature", "Amount", "Date"};
     painter.drawText(xOffset, yOffset - rowHeight, title);
     painter.drawLine(xOffset, yOffset - rowHeight + 10, 10000, yOffset - rowHeight + 10);
-    int lineYOffset = yOffset - 199;
-    int lineLength = 1100;
-    for (int col = 0; col < headers.size(); ++col) {
-        int xPos = xOffset + col * colWidth;
-        painter.drawLine(xPos, lineYOffset, xPos, lineYOffset + lineLength);
+    int startX = xOffset;
+    int startY = yOffset - rowHeight;
+    int endY = startY + (rowHeight * (DataList.size() + 1)+350);
+
+    for (int col = 0; col <= headers.size(); col++) {
+        painter.drawLine(startX + col * colWidth, startY, startX + col * colWidth, endY);
     }
 
     for (int col = 0; col < headers.size(); col++) {
@@ -470,3 +478,9 @@ void MainWindow::createToolTips()
 {
     ui->e_cName->setToolTip("Here you can provide your company name");
 }
+
+void MainWindow::b_exit_report()
+{
+    ui->stackedWidget->setCurrentIndex(0);
+}
+
